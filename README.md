@@ -23,13 +23,13 @@ This respository contains the Preference Pareto Exploration algorithm using the 
 | model_path   | folder    | models saved during training.     |
 |ParetoMTL | folder | Contains the ParetoMTL framework used for comparison.  |
 |plots | folder | Contains the .py files for visualizing the results of the multitask datasets saved in the ```Results``` folder  |
-| Results    | folder     | Saved pickle files containing optimal points for later visuaization.     |
-| src  | folder  | Contains functions and models used for PPE framework for multitask problems.  | 
+| Results    | folder     | Saved pickle files containing optimal points for later visualization.     |
+| src  | folder  | Contains functions and models used for the PPE framework for multitask problems.  | 
 | toyEx_code | folder  | The PPE implementation for toy examples such as the DTLZ 1-7 and other mathematical functions.   |
-|main.py | script | Run to implement the PPE for included DL problem such as 3-task MultiMNIST and 3 & 5 -task UCI census income problem.|
+|main.py | script | Run to implement the PPE for included DL problems such as 3-task MultiMNIST and 3 & 5 -task UCI census income problem.|
 | ws.py | script | Contains the weighted sum implementation.|
 
-- Download the multitask datasets i.e., the MultiMNIST, the UCI Census 3 and 5- task dataset into the **Data** folder by clicking [![DATASET](https://shields.io)](https://huggingface.co/datasets/aamakor/mop_multitask_dataset)
+- Download the multitask datasets, i.e., the MultiMNIST, the UCI Census 3 and 5-task datasets, into the **Data** folder by clicking here [:arrow_right: DATASET](https://huggingface.co/datasets/aamakor/mop_multitask_dataset/tree/main)
 
 
 ## Packages
@@ -42,10 +42,10 @@ This respository contains the Preference Pareto Exploration algorithm using the 
 
 ## Toy examples (``` toyEx_code```)
 
-This folder contains the various toy examples shown both in the main paper and also the supplementary material of the PPE paper. Each file in this folder contains the mathematical or benchmark toy problems in a notebook or .py file. To visualize the interactivity and Pareto navigation the .py files should be run. For final visualization, run the *plot_dtlz.py* or *plot_toy2.py* for the benchmark or mathematical problem respectively.
+This folder contains the various toy examples shown both in the main paper and also the supplementary material of the PPE paper. Each file in this folder contains the mathematical or benchmark toy problems in a notebook or .py file. To visualize the interactivity and Pareto navigation, the .py files should be run. For final visualization, run the ```plot_dtlz.py``` or ```plot_toy2.py``` for the benchmark or mathematical problem, respectively.
 
 
 ## Experiment
 
-To run the PPE framework for the multitask datasets in ```Data```, simply run the ```main.py``` and interactively supply the preference weights to navigate to new Pareto optimal points. For personal use, simple add your model and dataset into the ```model.py``` and ```dataLoader.py``` ensure both your new model and data are called in the ```main.py```. Interactive visualization during navigation is only on 3D. For more than three objectives final visualization can be done using the ```plot_uciplus.py```.
+To run the PPE framework for the multitask datasets in ```Data```, simply run the ```main.py``` and interactively supply the preference weights to navigate to new Pareto optimal points. For personal use, simply add your model and dataset into the ```model.py``` and ```dataLoader.py```, and ensure both your new model and data are called in the ```main.py```. Interactive visualization during navigation is only available in 3D. For more than three objectives, final visualization can be done using the ```plot_uciplus.py```.
 
