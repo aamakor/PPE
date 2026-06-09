@@ -1,0 +1,12 @@
+=== Training ===
+Predictor time / epoch 10: 9.83 s
+
+Corrector time / epoch 15: 4.14 s
+
+Training time (total): 13.97 s
+=== Training ===
+Predictor time / epoch 10: 9.74 s
+
+Corrector time / epoch 15: 4.22 s
+
+Training time (total): 13.96 s
