@@ -29,11 +29,7 @@ This respository contains the Preference Pareto Exploration algorithm using the 
 |main.py | script | Run to implement the PPE for included DL problems such as 3-task MultiMNIST and 3 & 5 -task UCI census income problem.|
 | ws.py | script | Contains the weighted sum implementation.|
 
-<<<<<<< HEAD
 - Download the multitask datasets, i.e., the MultiMNIST, the UCI Census 3 and 5-task datasets, into the **Data** folder by clicking here [:arrow_right: DATASET](https://doi.org/10.5281/zenodo.20623056)
-=======
-- Download the multitask datasets, i.e., the MultiMNIST, the UCI Census 3 and 5-task datasets, into the **Data** folder by clicking here [:arrow_right: DATASET](https://huggingface.co/datasets/aamakor/mop_multitask_dataset/tree/main)
->>>>>>> 084721688212e6b8abc31aaa020e634ffc790937
 
 
 ## Packages
@@ -46,24 +42,16 @@ This respository contains the Preference Pareto Exploration algorithm using the 
 
 ## Toy examples (``` toyEx_code```)
 
-<<<<<<< HEAD
 This folder contains the various toy examples shown both in the main paper and also the supplementary material of the PPE paper. Each file in this folder contains the mathematical or benchmark toy problems in a notebook or .py file. 
 
 To visualize the interactivity and Pareto navigation, the .py files should be run. For final visualization, run the ```plot_dtlz.py``` or ```plot_toy2.py``` for the benchmark or mathematical problem, respectively.
-=======
-This folder contains the various toy examples shown both in the main paper and also the supplementary material of the PPE paper. Each file in this folder contains the mathematical or benchmark toy problems in a notebook or .py file. To visualize the interactivity and Pareto navigation, the .py files should be run. For final visualization, run the ```plot_dtlz.py``` or ```plot_toy2.py``` for the benchmark or mathematical problem, respectively.
->>>>>>> 084721688212e6b8abc31aaa020e634ffc790937
 
 
 ## Experiment
 
-<<<<<<< HEAD
 To run the PPE framework for the multitask datasets in ```Data```, simply run the ```main.py``` and  interactively supply the preference weights to navigate to new Pareto optimal points. 
 - For example: ```main.py  --dtype UCI --num_obj 3``` loads and runs the PPE for the 3-tasks UCI Census income dataset with the already saved model for the initial optimal solution 
 *(To retrain the initial point from scratch see ```util.py``` in the src folder on where to comment out)*.
 
 For personal use, simply add your model and dataset into the ```model.py``` and ```dataLoader.py```, and ensure both your new model and data are called in the ```main.py```. Interactive visualization during navigation, is only available in 3D. For more than three objectives, final visualization of all objectives can be done by loading the results and using the ```plot_uciplus.py```.
-=======
-To run the PPE framework for the multitask datasets in ```Data```, simply run the ```main.py``` and interactively supply the preference weights to navigate to new Pareto optimal points. For personal use, simply add your model and dataset into the ```model.py``` and ```dataLoader.py```, and ensure both your new model and data are called in the ```main.py```. Interactive visualization during navigation is only available in 3D. For more than three objectives, final visualization can be done using the ```plot_uciplus.py```.
->>>>>>> 084721688212e6b8abc31aaa020e634ffc790937
 
