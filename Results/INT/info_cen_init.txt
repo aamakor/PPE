@@ -19,3 +19,9 @@ Initial training time/ epoch 500: 1.18 s
 === Training ===
 Initial training time/ epoch 500: 1.16 s
 
+=== Training ===
+Initial training time/ epoch 500: 2.00 s
+
+=== Training ===
+Initial training time/ epoch 500: 1.20 s
+

@@ -37,7 +37,11 @@ def run(model,lr,nobj, optimizer,optimizer_c, num_init, path,lr_scheduler,lr_sch
 
     torch.cuda.synchronize()
     total_startI = time.time()
-    if os.path.exists(path / f"model_init_{num_init}_{type}.pth"):  # ########################################### Comment from here to below
+    
+    # ########################################### Comment from here to below if you want to retrain the initial point from scratch (instead of loading existing checkpoint) ###########################################
+    ## Remove the if statement to retrain the initial point from scratch (instead of loading existing checkpoint) ###########################################
+
+    if os.path.exists(path / f"model_init_{num_init}_{type}.pth"):  
         print("Initial model already exist. Computing loss............")
         ckpt_file = f"model_init_{num_init}_{type}.pth"
         model.load_model(path / ckpt_file)
