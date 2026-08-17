@@ -92,16 +92,18 @@ corrt_all = np.array(corrt_all)
 
 
 all_subopt_points = np.concatenate((initial_point[-1, :].reshape(1,3), corr_all), axis=0)
+all_subopt_pointsp = np.concatenate((initial_point[-1, :].reshape(1,3), pred_all), axis=0)
 all_subopttest_points = np.concatenate((initialt_point[-1, :].reshape(1,3), corrt_all), axis=0)
+all_subopttest_pointsp = np.concatenate((initialt_point[-1, :].reshape(1,3), predt_all), axis=0)
 
 
 ## Scaling for better visualization as shown in figure 4a of the paper using z-score normalization (standardization) for both training and test points. 
 # This will help in visualizing the points more clearly in the 2D plot. We remove the initial point from the scaling and only scale the subsequent points for better visualization of the trajectory.
 preference = pref_all
-predictor_point = (all_subopt_points[1:] - all_subopt_points[1:].mean(axis=0)) / all_subopt_points[1:].std(axis=0) 
+predictor_point = (all_subopt_pointsp[1:] - all_subopt_pointsp[1:].mean(axis=0)) / all_subopt_pointsp[1:].std(axis=0) 
 corrector_point = (all_subopt_points[1:] - all_subopt_points[1:].mean(axis=0))  / all_subopt_points[1:].std(axis=0) 
 preferencet = preft_all
-predictor_pointt = (all_subopttest_points[1:] - all_subopttest_points[1:].mean(axis=0)) / all_subopttest_points[1:].std(axis=0) 
+predictor_pointt = (all_subopttest_pointsp[1:] - all_subopttest_pointsp[1:].mean(axis=0)) / all_subopttest_pointsp[1:].std(axis=0) 
 corrector_pointt = (all_subopttest_points[1:] - all_subopttest_points[1:].mean(axis=0))  / all_subopttest_points[1:].std(axis=0) 
 
 
