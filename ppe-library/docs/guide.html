@@ -1,0 +1,199 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Documentation — PPE</title><meta name="description" content="Install PPE, connect your dataset, define objectives, and navigate with the PPE predictor–corrector training loop."><link rel="stylesheet" href="assets/style.css"></head><body>
+<a class="skip" href="#main">Skip to content</a><header class="header"><a class="brand" href="index.html"><span class="brand-mark">↗</span> PPE<span class="brand-sub">Preference Pareto Exploration</span></a><nav aria-label="Main navigation"><a href="guide.html" aria-current="page">Documentation</a><a href="index.html#examples">Examples</a><a href="https://github.com/aamakor/PPE">GitHub ↗</a></nav></header>
+<div class="wrap docs-layout"><aside class="sidebar"><p>IN THIS GUIDE</p><a href="#install">Installation</a><a href="#dataset">Your dataset & model</a><a href="#objectives">Custom objectives</a><a href="#many-objectives">More than 3 objectives</a><a href="#training">Training setup</a><a href="#navigation">Navigation decisions</a><a href="#plots">3D navigation plots</a><a href="#outputs">Results & checkpoints</a><a href="#api">API reference</a><a href="#examples">Examples & sample data</a><a href="#preservation">Supported behavior</a><a href="#citation">Citation</a></aside>
+<main id="main" class="guide"><p class="eyebrow">PPE / USER GUIDE / ALPHA</p><h1>Your problem.<br>The PPE training algorithm.</h1><p>PPE’s algorithm, implementation, Python API, and documentation website are developed and maintained by Augustina C. Amakor.</p><p>Create your own Python experiment file with your model, datasets, and objective losses. Import PPE to run the predictor–corrector algorithm. Training runs in your Python environment; this website provides instructions and a downloadable starter, and does not upload or train on your data.</p><div class="notice">Start with the download-free demo. Use the <a href="#preservation">supported setup</a> to configure your experiment.</div>
+<h2 id="install">1. Installation</h2><p>Use Python 3.11 for the environment closest to the repository. Get a source checkout containing <code>ppe-library/</code>, then use its root directory:</p><pre><code>git clone https://github.com/aamakor/PPE.git
+cd PPE
+python -m venv .venv
+# Linux / macOS:
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+
+python -m pip install -e ./ppe-library
+ppe demo --interactive --output runs/interactive-demo</code></pre><p>This installs PyTorch, NumPy, SciPy and tqdm. A GPU is optional; the demo defaults to CPU. For a scripted one-cycle run without prompts, use <code>ppe demo --output runs/first-demo</code>. The distribution is named <code>ppe-navigation</code> and imports as <code>ppe</code>. There is no published PyPI release yet. If your checkout does not contain <code>ppe-library/</code>, obtain the library source or a wheel from the project maintainer before continuing.</p><p>Installation does not download the sample datasets. There are no imports from <code>Data/</code>, model registries, or references to local dataset paths in the package.</p>
+<h2 id="dataset">2. Connect your dataset and model</h2><p><strong>Yes: start with a file of your own, such as <code>my_experiment.py</code>.</strong> Copy the <a href="assets/custom_dataset.py" download="my_experiment.py">complete starter</a> into your project. You do not need to edit the installed <code>ppe/demo.py</code> or the algorithm. One file is enough to start; larger projects may import models and datasets from separate modules.</p>
+<ol><li>Install PPE, then save the starter as <code>my_experiment.py</code> in a directory you choose.</li><li>Set <code>OBJECTIVE_NAMES</code>, <code>CLASS_COUNTS</code>, <code>INPUT_DIM</code>, and a fresh <code>OUTPUT_DIR</code>. These constants belong to the starter, not the PPE API.</li><li>Replace <code>make_loaders()</code> with your dataset loading, or set <code>DATA_DIR</code> to use the starter's NumPy file adapter described below.</li><li>Adapt <code>MultiTaskModel</code> to your input and prediction tasks. For non-classification losses, replace <code>Objectives.classification(...)</code> with the <a href="#objectives">custom loss interface</a>.</li><li>In <code>build()</code>, choose the device, optimizers, optional schedulers, and <code>PPEConfig</code> settings. Keep its return contract below.</li><li>Run the command from the directory containing your file:</li></ol>
+<pre><code>ppe run my_experiment:build
+
+# Optional live 3D view:
+ppe run my_experiment:build --plot</code></pre>
+<p>Install the plotting extra first for the second command: <code>python -m pip install -e './ppe-library[plot]'</code> from the source checkout root. Use a fresh output directory for each run.</p>
+<pre><code># my_experiment.py: the CLI imports this function and calls it.
+def build():
+    # Construct model, losses, loaders, optimizers and trainer here.
+    return trainer, (train_loader, val_loader, test_loader), TerminalInteraction()</code></pre>
+<p>The downloaded file contains the complete runnable implementation of this contract. <code>build()</code> supplies the objects; the CLI calls <code>trainer.fit(...)</code>. Do not also call <code>fit()</code> inside <code>build()</code>. To run without the CLI, use <code>python my_experiment.py</code>; the starter's main block calls it once. Custom runs already use terminal interaction and do not need the demo-only <code>--interactive</code> flag.</p>
+<h3>Use your existing dataset</h3><p>Your dataset should produce <code>(inputs, targets)</code>. Inputs are a tensor with a batch dimension. Targets may be a tensor, dictionary, tuple, or list of tensors; PPE moves these recursively to the model's device. Use your own dataset for file reading, preprocessing and train/validation/test splits.</p><pre><code>from torch.utils.data import DataLoader
+
+train = DataLoader(train_dataset, batch_size=32, shuffle=True)
+val = DataLoader(val_dataset, batch_size=32, shuffle=False)
+test = DataLoader(test_dataset, batch_size=32, shuffle=False)</code></pre><p>Use a map-style dataset and a loader with a fixed <code>batch_size</code>. The predictor needs at least four training batches because the Jacobian calculation uses one quarter of the loader. Validation and test loaders must be nonempty.</p><h3>Optional NumPy file adapter in the starter</h3>
+<p>You can keep the starter's loader when your data is already tabular arrays. Save three separate files under your chosen data directory:</p>
+<pre><code>my-project/
+  my_experiment.py
+  data/
+    train.npz
+    val.npz
+    test.npz</code></pre>
+<p>Each file contains <code>inputs</code> with shape <code>[samples, INPUT_DIM]</code> and integer <code>targets</code> with shape <code>[samples, number_of_objectives]</code>. For example, with your already split arrays:</p>
+<pre><code>import numpy as np
+
+np.savez("data/train.npz", inputs=train_x, targets=train_y)
+np.savez("data/val.npz", inputs=val_x, targets=val_y)
+np.savez("data/test.npz", inputs=test_x, targets=test_y)
+
+# Set this in my_experiment.py:
+DATA_DIR = "data"</code></pre>
+<p>Create the data directory before saving. Paths are relative to the directory where you run the command. Target column <code>i</code> corresponds to objective <code>i</code>, and its class IDs range from <code>0</code> to <code>CLASS_COUNTS[i] - 1</code>. The adapter loads inputs as float32 and targets as integer tensors. With <code>DATA_DIR = None</code>, the starter uses generated demonstration data. For images, text, regression, or structured targets, provide your own dataset and <code>make_loaders()</code>; conversion to NumPy files is optional.</p>
+<h3>Define your model</h3><p>The model must return a list or tuple with one output per objective, in the same order as your objective names. Here is a minimal three-task classifier:</p><pre><code>import torch
+from torch import nn
+
+class MyModel(nn.Module):
+    def __init__(self, input_dim, class_counts):
+        super().__init__()
+        self.shared = nn.Sequential(nn.Linear(input_dim, 16), nn.Tanh())
+        self.heads = nn.ModuleList(
+            nn.Linear(16, count) for count in class_counts
+        )
+
+    def forward(self, inputs):
+        features = self.shared(inputs)
+        return [head(features) for head in self.heads]
+
+model = MyModel(input_dim=8, class_counts=(2, 3, 2)).to("cpu")</code></pre><p>Place the model on its CPU or CUDA device <strong>before</strong> constructing optimizers. All parameters must require gradients and reside on one device. The predictor uses second derivatives: custom operators must support the required autograd operations. No custom <code>save_model</code> or <code>load_model</code> methods are needed.</p><p><a href="assets/custom_dataset.py" download>Download the complete runnable classification starter ↓</a>. It runs generated data by default and also includes the optional NumPy adapter above. For dictionary model inputs, adapt them into the supported tensor input contract in your dataset/model wrapper.</p>
+<h2 id="objectives">3. Define objective losses</h2><h3>Classification</h3><pre><code>from ppe import Objectives
+
+objectives = Objectives.classification(("task A", "task B", "task C"))
+# Model output: one [batch, classes_i] logits tensor per task.
+# Targets: integer tensor [batch, 3].</code></pre><p>This interface uses cross entropy, integer label conversion and reported top-1 accuracy. Metrics are for reporting; validation losses drive the selection decisions.</p><h3>Regression and structured targets</h3><pre><code>import torch.nn.functional as F
+
+names = ("temperature", "pressure", "humidity")
+
+def loss(index, output, targets):
+    return F.mse_loss(output, targets[names[index]])
+
+objectives = Objectives(names, loss)
+# Your dataset returns (input_tensor, {"temperature": ..., ...}).</code></pre><p>The callable receives <code>(index, output_i, all_targets)</code> and must return a finite, differentiable scalar tensor, with mean batch reduction. Select the target shape explicitly; avoid accidental broadcasting. PPE minimizes every objective. Loss scales are not automatically normalized.</p><h3>Mixed objectives</h3><pre><code>def mixed_loss(index, output, targets):
+    if index == 0:
+        return F.cross_entropy(output, targets["class"].long())
+    if index == 1:
+        return F.mse_loss(output, targets["regression"])
+    return F.binary_cross_entropy_with_logits(output, targets["binary"])
+
+objectives = Objectives(("class", "regression", "binary"), mixed_loss)</code></pre><p>An optional <code>score(index, output_i, targets)</code> callable returns a reporting metric. Without it, legacy console metric fields show <code>nan</code> to indicate no metric is defined.</p>
+<h2 id="many-objectives">More than three objectives</h2>
+<p><strong>The library infers the objective count from <code>len(objectives.names)</code>.</strong> There is no separate <code>nobj</code> setting to change, and the demo's three objectives are not a training limit. PPE supports three or more objectives, with matching model outputs and losses.</p>
+<p>For a complete five-task classification setup, change these constants at the top of the downloaded starter:</p>
+<pre><code>OBJECTIVE_NAMES = ("task A", "task B", "task C", "task D", "task E")
+CLASS_COUNTS = (2, 3, 2, 4, 2)
+INPUT_DIM = 8
+OUTPUT_DIR = "runs/five-objectives"
+# DATA_DIR = None for generated data, or "data" for your split files.</code></pre>
+<p>The starter builds five output heads from <code>CLASS_COUNTS</code>, creates five losses from <code>OBJECTIVE_NAMES</code>, and, with generated data, produces five target columns automatically. With your own data, you must supply all five target columns. For a different model or custom losses, make the corresponding changes yourself:</p>
+<div class="table-scroll"><table><thead><tr><th>Part</th><th>Five-objective contract</th></tr></thead><tbody>
+<tr><td>Objective names</td><td>Five unique names in a fixed order.</td></tr>
+<tr><td>Model output</td><td>Five output tensors in the same order; classification shapes are <code>[batch, classes_i]</code>.</td></tr>
+<tr><td>Targets and loss</td><td>Classification targets are <code>[batch, 5]</code>. A custom loss instead selects the correct target from your target structure for each index <code>0…4</code>.</td></tr>
+<tr><td>Preference vector</td><td>Five entries. The terminal builds this vector from your selected objective numbers.</td></tr>
+<tr><td>3D plot</td><td>Choose any three different objective indices. Training and recorded loss vectors still include all five objectives.</td></tr>
+</tbody></table></div>
+<pre><code>ppe run my_experiment:build --plot --plot-objectives 1 3 5
+
+# At the first preference prompt:
+# Select objectives: 1, 5
+# Enter 2 preference values: 0.7 0.3
+# Internal five-entry vector: [-0.7, 0, 0, 0, -0.3]</code></pre>
+<p>Each objective is a scalar quantity to minimize; it is not a class label. A five-class classifier is one objective if it uses one cross-entropy loss. For ten or more objectives, use comma- or space-separated indices, such as <code>1, 10</code>, rather than concatenating digits. The website builder's preset counts are examples, not a cap on the library.</p>
+<h2 id="training">4. Configure training</h2><pre><code>from ppe import PPE, PPEConfig
+
+config = PPEConfig(
+    output_dir="runs/my-experiment",
+    num_init=500, num_pred=10, num_corr=15,
+    num_minres=100, step_size=0.01, cycles=None,
+)
+optimizer = torch.optim.SGD(
+    model.parameters(), lr=0.01, momentum=0.9, weight_decay=1e-4,
+)
+corrector_optimizer = torch.optim.SGD(
+    model.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-5,
+)
+trainer = PPE(model, objectives, optimizer, corrector_optimizer, config)
+result = trainer.fit(train, val, test)</code></pre><p>The example above supplies optimizer settings in your experiment file. You supply both optimizers, so the library does not impose an optimizer or learning rate. <code>step_size</code> controls the predictor; it is separate from either optimizer's learning rate.</p><p>Optional <code>scheduler=...</code> and <code>corrector_scheduler=...</code> attach schedulers to their corresponding optimizers. The scheduler steps <strong>after every training batch</strong>. The starter demonstrates a cosine scheduler with batch stepping.</p><p>Set seeds and any device determinism configuration in your application. Importing PPE does not reset random state or select a Matplotlib backend.</p>
+<h2 id="navigation">5. Navigate with preferences</h2><p>After the initial training and evaluation finish, PPE asks you to select objectives and enter preference values, through the <code>get_preference(nobj)</code> interface:</p><pre><code>Select objectives (e.g. 1, 24, 135) [q to stop]: 13
+Enter 2 preference values [q to stop]: 0.7 0.3
+# Resulting internal preference: [-0.7, 0, -0.3]</code></pre><p>PPE negates the values you enter at the selected objective indices. In the current code, input validation checks vector length and finiteness and accepts either sign; it does not require a positive entered magnitude or a negative internal entry. An internal negative entry selects an objective for reduction. There is no automatic normalization, and accepted input still goes through the existing predictor checks. For ten or more objectives, use space- or comma-separated objective numbers, such as <code>1, 10</code>.</p><p>The default <code>cycles=None</code> keeps asking for preferences after each completed predictor–corrector cycle. Enter <code>q</code> at a prompt to stop. Set <code>cycles=1</code> for one completed cycle or <code>cycles=0</code> for initialization only. Each cycle includes predictor and corrector steps with their own convergence and retry conditions. The retry prompts, step-size requests, new-front decision, and choice to keep the current preference remain available.</p><h3>When PPE asks for input</h3><ol><li>After initial training or loading an initial checkpoint, PPE evaluates the initial point and requests a preference.</li><li>The predictor may ask for a new preference or step size when an existing check rejects progress. These requests can occur within one cycle.</li><li>On the predictor rerun branch, choose <code>0</code> to change preference or <code>1</code> to rerun, then answer <code>Keep current preference? (y/n)</code>. Keeping it reuses the vector. Replacing it asks for one value per objective and negates those entered values. A rerun also asks for a positive iteration budget.</li><li>The corrector may ask whether to accept a new front when the front-change condition is reached.</li><li>After a completed cycle, the default configuration returns to objective selection. Enter <code>q</code> at any terminal prompt to stop.</li></ol><p>Stopping through <code>trainer.fit(...)</code> returns <code>status="stopped"</code> with a reason and any completed cycle records. Reaching a cycle limit returns <code>status="completed"</code>. Use <code>resume=True</code> to continue from saved recovery state.</p><h3>Try interactive navigation</h3><pre><code>ppe demo --interactive --output runs/interactive-demo</code></pre><p>The plain <code>ppe demo</code> command is a scripted one-cycle smoke example and does not request input. Add <code>--interactive</code> to choose preferences yourself after initialization.</p><h3>Standalone preference function</h3><pre><code>from ppe import get_preference, NavigationStopped
+
+try:
+    pref = get_preference(3)
+except NavigationStopped:
+    pref = None  # q, end of input, or a terminal interrupt.</code></pre><p>Normal <code>trainer.fit(...)</code> already invokes the terminal interaction at preference-request points; you do not need to call this function separately. To use the alternative complete-vector input format:</p><pre><code>from ppe import TerminalInteraction
+result = trainer.fit(train, val, test,
+    interaction=TerminalInteraction(preference_format="signed"))
+# At its preference prompt, enter e.g. -0.7 0 -0.3</code></pre><p>Full signed vectors in this mode and in scripted decisions are passed through without negation. The objective/value prompt is the mode that negates entered values.</p><h3>Scripted decisions</h3><pre><code>from ppe import ScriptedInteraction
+
+decisions = ScriptedInteraction(
+    preferences=[[-1, 0, 0], [-0.5, -0.5, 0]],
+    step_sizes=[0.005],
+    accept_fronts=[True],
+    actions=[("rerun_predictor", [-1, 0, 0], 20)],
+)
+result = trainer.fit(train, val, test, interaction=decisions)
+print(result.status, result.reason)</code></pre><p>Each decision has its own queue. Rejected directions may consume multiple preferences within one cycle. If a required queue is empty, PPE returns <code>status="stopped"</code> and explains the missing decision. It never assumes acceptance of a new front.</p><h3>Application integration</h3><p>Implement the <code>Interaction</code> protocol to connect your own UI or configuration source. It defines <code>preference(n_objectives)</code>, <code>step_size()</code>, <code>accept_front()</code>, and <code>action(preference, max_runs)</code>. The last method returns <code>("change_pref", vector, None)</code> or <code>("rerun_predictor", vector, positive_int)</code>. Raise <code>NavigationStopped</code> to stop. Decisions are synchronous; a browser training service would need its own backend.</p><p>Use <code>on_initial=callback</code> for the evaluated initial point and <code>on_cycle=callback</code> for completed cycle loss vectors and preferences. The optional plotting helper consumes these events to reconstruct the 3D navigation.</p>
+<h2 id="plots">3D navigation plots</h2>
+<p>Add <code>--plot</code> to your training command. The view shows the initial point in black, predictor segments in blue, and corrector segments in red. It updates after initialization and each completed cycle, while preferences are entered in your training terminal.</p>
+<pre><code>ppe run my_experiment:build --plot --plot-objectives 1 3 5</code></pre>
+<p>This example plots objectives 1, 3 and 5 of a problem with at least five objectives. Omit <code>--plot-objectives</code> to display 1, 2 and 3. All objectives still participate in training. The display uses QtAgg or TkAgg when available and falls back to WebAgg when neither is usable.</p>
+<p>The CLI saves <code>results/navigation-3d.png</code> beside <code>results/navigation.json</code>. You can also plot a saved run using the <a href="assets/plot_navigation.py" download>downloadable plotting script</a>:</p>
+<pre><code>python plot_navigation.py RUN/results/navigation.json --objectives 1 3 5 --output trajectory.png</code></pre>
+<p>See <a href="plotting.md">plotting usage</a> for Python callbacks, other views, and older result files.</p>
+<figure style="margin:24px 0"><img src="assets/navigation-3d.png" alt="Three-dimensional loss trajectory with a black initial point, blue predictor segments, and red corrector markers" style="max-width:100%;height:auto"><figcaption>Two cycles of the quadratic CPU example. Predictor and corrector points coincide in this run, so the red correction segments have zero length.</figcaption></figure>
+<h2 id="outputs">6. Results and checkpoints</h2><pre><code>runs/my-experiment/
+  checkpoints/
+    recovery.pt
+    archive/
+      initial_&lt;id&gt;.pth
+      initial_&lt;id&gt;.json
+      predictor_&lt;id&gt;.pth
+      predictor_&lt;id&gt;.json
+      corrector_&lt;id&gt;.pth
+      corrector_&lt;id&gt;.json
+    model_init_500_custom.pth
+    alpha_500.npy
+    model_pred_10_custom.pth
+    model_corr_15_custom.pth
+    model_corr_15_custom_old.pth
+  results/
+    navigation.json
+    first_result_cen0.pkl
+    first_result_test_cen0.pkl
+    first_alphas_cen0.pkl
+    init_total_loss_cen0.pkl
+    info_cen_init.txt
+    info_cen0.txt</code></pre><p>Files appear when their corresponding phases finish. <code>RunResult</code> contains the absolute output directory, status, optional stop reason, and completed cycle records. The JSON file mirrors the status, reason, and records and now also stores <code>initial.validation</code>, <code>initial.test</code>, and <code>objective_names</code>. These allow plotting the initial point even when no navigation cycle completes. Each cycle record includes the signed preference, validation predictor/corrector losses, and test predictor/corrector losses. Cycle record numbers start at 1; legacy pickle filenames start at 0.</p><p>Each archived point has a unique model snapshot in <code>checkpoints/archive/</code> and a matching JSON record containing its validation losses, alpha weights, phase, and checkpoint filename. These snapshots remain available across later cycles and resumes. Phase checkpoint files identify the current selected models. Model snapshots contain plain state dictionaries and load into the same architecture:</p><pre><code>state = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+model.load_state_dict(state)</code></pre><h3 id="resume">Continue a saved run</h3><p>Recreate your trainer with the same model architecture, data, objective order, optimizers, schedulers, and training settings. Set the same output directory and <code>resume=True</code>, then call <code>fit()</code>:</p><pre><code>from dataclasses import replace
+
+trainer, loaders, interaction = build()
+trainer.config = replace(trainer.config, resume=True, cycles=5)
+result = trainer.fit(*loaders, interaction=interaction)</code></pre><p><code>checkpoints/recovery.pt</code> restores model parameters, both optimizer states, optional scheduler states, random-number-generator states, loader generators, completed history, and navigation state. Recovery boundaries are saved before initialization, after initialization, and after each completed cycle. An interrupted initialization or cycle is replayed from its saved start; recorded preference and front decisions are reused before new input is requested. For reproducible replay, use the same data and deterministic training setup, including <code>num_workers=0</code> for loaders with random transforms.</p><p><code>cycles=5</code> means five completed cycles in total, including saved cycles. Use <code>cycles=None</code> for ongoing navigation. A matching recovery checkpoint is required for resume. Use a fresh output directory for an independent experiment. Only load recovery files created by your own trusted runs.</p>
+<h2 id="api">API reference</h2><div class="table-scroll"><table><thead><tr><th>Object</th><th>Contract</th></tr></thead><tbody><tr><td><code>PPE(model, objectives, optimizer, corrector_optimizer, config, *, scheduler=None, corrector_scheduler=None)</code></td><td>Wrap your fully trainable model. Both optimizers must own exactly its parameters. Schedulers must belong to the corresponding optimizer.</td></tr><tr><td><code>PPE.fit(train_loader, val_loader, test_loader, *, interaction=None, on_cycle=None, on_initial=None)</code></td><td>Run the PPE training loop and return a <code>RunResult</code>. Rejected directions trigger preference or step-size prompts.</td></tr><tr><td><code>Objectives(names, loss, score=None)</code></td><td>Ordered unique names, a per-task mean loss callback, optional reporting metric. At least three names.</td></tr><tr><td><code>Objectives.classification(names)</code></td><td>Cross entropy and top-1 accuracy for column-wise integer targets.</td></tr><tr><td><code>get_preference(nobj=3)</code></td><td>Standalone objective-selection and preference-value prompts, returning the signed NumPy vector.</td></tr><tr><td><code>TerminalInteraction()</code></td><td>Objective-selection/value prompts with explicit front decisions and quit support. Optional preference_format="signed" accepts full vectors.</td></tr><tr><td><code>ScriptedInteraction(preferences, *, step_sizes=(), accept_fronts=(), actions=())</code></td><td>Explicit queues of decisions; exhaustion stops with a reason.</td></tr><tr><td><code>RunResult</code></td><td><code>output_dir</code>, <code>status</code>, <code>reason</code>, <code>cycles</code>, <code>initial</code>, <code>objective_names</code>.</td></tr></tbody></table></div>
+<h3>PPEConfig fields</h3><div class="table-scroll"><table><thead><tr><th>Field</th><th>Default</th><th>Meaning</th></tr></thead><tbody><tr><td><code>output_dir</code></td><td>Required</td><td>Run artifact directory.</td></tr><tr><td><code>num_init</code></td><td>500</td><td>Positive initialization epoch count.</td></tr><tr><td><code>num_pred</code></td><td>10</td><td>Predictor budget, at least 2. Supports early stopping and reruns.</td></tr><tr><td><code>num_corr</code></td><td>15</td><td>Positive corrector epoch budget.</td></tr><tr><td><code>num_minres</code></td><td>100</td><td>MINRES maximum iterations passed to SciPy.</td></tr><tr><td><code>step_size</code></td><td>0.01</td><td>Positive initial predictor step size.</td></tr><tr><td><code>cycles</code></td><td>None</td><td>Completed navigation cycles; 0 initializes only, None continues.</td></tr><tr><td><code>resume</code></td><td>False</td><td>Restore saved training state and continue navigation in the same output directory.</td></tr><tr><td><code>run_name</code></td><td>custom</td><td>Checkpoint filename label; letters, digits, hyphens, underscores.</td></tr></tbody></table></div><h3>Command line</h3><pre><code>ppe demo --output runs/demo --device cpu --cycles 1
+ppe demo --interactive --output runs/interactive-demo
+ppe run my_experiment:build</code></pre><p>A custom factory must be importable and return <code>(trainer, (train_loader, val_loader, test_loader), interaction)</code>. Run from the factory's directory or install its module. <code>python -m ppe.cli</code> provides the same commands.</p>
+<h2 id="examples">Examples and sample datasets</h2><ul><li><strong>Quadratic demo:</strong> <code>ppe demo --interactive</code> runs three conflicting quadratic objectives and asks for preferences after initialization and each completed cycle. Plain <code>ppe demo</code> supplies scripted decisions for one cycle.</li><li><strong>Classification starter:</strong> <a href="assets/custom_dataset.py" download>download the runnable factory</a> and replace its synthetic data with your loaders.</li><li><strong>Toy examples:</strong> <a href="https://github.com/aamakor/PPE/tree/master/toyEx_code">toyEx_code</a> contains mathematical notebooks, interactive scripts and DTLZ 1–7 examples. Run these from the toyEx_code folder and follow the repository README. Install the dependencies listed for those examples.</li><li><strong>Sample experiments:</strong> <code>main.py</code> runs the supplied MultiMNIST/UCI models. For example, <code>python main.py --dtype UCI --num_obj 3</code> uses the supplied setup and available initial checkpoint.</li><li><strong>Sample data:</strong> the README supplies <a href="https://doi.org/10.5281/zenodo.20623056">Zenodo DOI 10.5281/zenodo.20623056</a>. Extract according to the <code>Data/</code> loaders when reproducing those experiments.</li></ul>
+<h2 id="preservation">Supported behavior</h2>
+<p>Define your data, model, and losses through the PPE Python API.</p>
+<ul><li>Three or more objectives, with matching model outputs and differentiable scalar mean losses.</li><li>Training on CPU or CUDA, with fully trainable model parameters on one device and support for second derivatives.</li><li>Map-style datasets, at least four training batches for navigation, nonempty validation and test loaders, and at least two predictor iterations.</li><li>Objective minimization using the loss scales you supply; schedulers step after each training batch.</li><li>Interactive or scripted preferences, convergence-based minimum-norm optimization, predictor retries, and front decisions.</li><li>A unique model snapshot and validation-loss record for each archived point.</li><li>Recovery of training state and recorded decisions, with interrupted work replayed from a saved initialization or cycle boundary.</li><li>Live 3D plots and saved projections of selected objectives while training on all objectives.</li></ul>
+<h2 id="citation">Citation</h2><h3>Interactive Pareto Navigation for Deep Multi-task Learning</h3><p>Augustina C. Amakor · Konstantin Sonntag · Sebastian Peitz</p><p>Machine Learning and Knowledge Discovery in Databases. Research Track. Springer Nature Switzerland, 2026, pp. 652–668.</p><p><a href="https://doi.org/10.1007/978-3-032-37667-1_37">DOI: 10.1007/978-3-032-37667-1_37</a></p><pre><code id="citation-bib">@inbook{Amakor2026,
+  title = {Interactive Pareto Navigation for Deep Multi-task Learning},
+  ISBN = {9783032376671},
+  ISSN = {1611-3349},
+  url = {http://dx.doi.org/10.1007/978-3-032-37667-1_37},
+  DOI = {10.1007/978-3-032-37667-1_37},
+  booktitle = {Machine Learning and Knowledge Discovery in Databases. Research Track},
+  publisher = {Springer Nature Switzerland},
+  author = {Amakor,  Augustina C. and Sonntag,  Konstantin and Peitz,  Sebastian},
+  year = {2026},
+  month = Sept,
+  pages = {652–668}
+}</code></pre><p><a href="assets/citation.bib" download>Download BibTeX ↓</a></p>
+</main></div><footer class="wrap footer"><span>PPE · © 2026 Augustina C. Amakor · MIT</span><div><a href="index.html">Home</a><a href="#dataset">Use your dataset</a><a href="https://github.com/aamakor/PPE">Source</a></div></footer></body></html>

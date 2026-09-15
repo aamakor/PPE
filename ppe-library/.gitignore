@@ -1,0 +1,9 @@
+__pycache__/
+*.egg-info/
+build/
+dist/
+.venv/
+runs/
+
+# Creator-only local documentation; never publish with the public repository.
+maintainer/

@@ -1,0 +1,8 @@
+include LICENSE CITATION.bib source_manifest.json
+recursive-include docs *.md *.html *.css *.js *.svg *.png
+recursive-include docs/assets *.py *.bib
+recursive-include examples *.py
+recursive-include tests *.py
+recursive-include tools *.py
+
+prune maintainer
