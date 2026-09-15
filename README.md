@@ -61,7 +61,7 @@ For personal use, simply add your model and dataset into the ```model.py``` and 
 ## Installable library and interactive navigation 
 
 To use the PPE as python library visit  
-## [:arrow_lower_down:](https://aamakor.github.io/PPE/)
+## [:arrow_down:](https://aamakor.github.io/PPE/)
 ## [Website](https://aamakor.github.io/PPE/)
 
 
