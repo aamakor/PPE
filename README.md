@@ -89,5 +89,24 @@ To run the PPE framework for the multitask datasets in ```Data```, simply run th
 - For example: ```main.py  --dtype UCI --num_obj 3``` loads and runs the PPE for the 3-tasks UCI Census income dataset with the already saved model for the initial optimal solution 
 *(To retrain the initial point from scratch see ```util.py``` in the src folder on where to comment out)*.
 
-For personal use, simply add your model and dataset into the ```model.py``` and ```dataLoader.py```, and ensure both your new model and data are called in the ```main.py```. Interactive visualization during navigation is only available in 3D. For more than three objectives, final visualization of all objectives can be done by loading the results and using the ```plot_uciplus.py```.
+For personal use, simply add your model and dataset into the ```model.py``` and ```dataLoader.py```, and ensure both your new model and data are called in the ```main.py```. Interactive visualization during navigation, is only available in 3D. For more than three objectives, final visualization of all objectives can be done by loading the results and using the ```plot_uciplus.py```.
 
+
+## Reference
+If you find ```PPE``` helpful for your research, please cite the following paper:
+
+```
+@inbook{Amakor2026,
+  title = {Interactive Pareto Navigation for Deep Multi-task Learning},
+  ISBN = {9783032376671},
+  ISSN = {1611-3349},
+  url = {http://dx.doi.org/10.1007/978-3-032-37667-1_37},
+  DOI = {10.1007/978-3-032-37667-1_37},
+  booktitle = {Machine Learning and Knowledge Discovery in Databases. Research Track},
+  publisher = {Springer Nature Switzerland},
+  author = {Amakor,  Augustina C. and Sonntag,  Konstantin and Peitz,  Sebastian},
+  year = {2026},
+  month = Sept,
+  pages = {652–668}
+}
+```

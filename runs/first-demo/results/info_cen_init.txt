@@ -1,0 +1,3 @@
+=== Training ===
+Initial training time/ epoch 2: 0.48 s
+
