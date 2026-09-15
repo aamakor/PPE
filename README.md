@@ -16,41 +16,6 @@ This respository contains the Preference Pareto Exploration algorithm using the 
 </table>
 
 
-## Installable library and interactive navigation
-
-PPE’s algorithm, implementation, Python API, and documentation website are
-developed and maintained by Augustina C. Amakor.
-
-Use [`ppe-library/`](ppe-library/README.md) to supply your own PyTorch model,
-data loaders and objective losses without editing the PPE training code.
-From this repository's root, install it and try the interactive CPU example:
-
-```bash
-python -m pip install -e ./ppe-library
-ppe demo --interactive --output runs/interactive-demo
-```
-
-After initialization finishes, select objectives (for example, `13`), then enter
-their preference values (`0.7 0.3`). PPE constructs `[-0.7, 0, -0.3]`, runs the
-predictor and corrector, and asks for preferences again. Enter `q` at a prompt to
-finish. Normal library training uses `cycles=None` by default for ongoing
-interaction. The plain `ppe demo` command runs one scripted cycle without prompts.
-
-The public `get_preference(nobj)` function exposes the objective/value prompts;
-`trainer.fit(...)` already requests preferences at the relevant training stages.
-See the [public user guide](ppe-library/docs/guide.html) for installation, dataset
-adaptation, custom losses, preferences, and supported behavior. Copy the
-[classification starter](ppe-library/examples/custom_dataset.py) to your own
-`my_experiment.py`, customize it, and run `ppe run my_experiment:build` from its
-directory. [Five or more objectives](ppe-library/docs/guide.html#many-objectives)
-use the same interface: align objective names, model outputs, losses and targets.
-
-For a live 3D plot, install `'./ppe-library[plot]'` and add `--plot` to the
-command. PPE tries QtAgg, then TkAgg, and starts WebAgg automatically only if
-neither desktop backend is usable. Choose displayed objectives with
-`--plot-objectives 1 3 5`; training still uses every objective. The
-[plotting guide](ppe-library/docs/plotting.md) covers interpreting and exporting
-trajectories. Use a fresh output directory for each independent run.
 
 ## General descriptions
 | Name | Type | Description |
@@ -90,6 +55,17 @@ To run the PPE framework for the multitask datasets in ```Data```, simply run th
 *(To retrain the initial point from scratch see ```util.py``` in the src folder on where to comment out)*.
 
 For personal use, simply add your model and dataset into the ```model.py``` and ```dataLoader.py```, and ensure both your new model and data are called in the ```main.py```. Interactive visualization during navigation, is only available in 3D. For more than three objectives, final visualization of all objectives can be done by loading the results and using the ```plot_uciplus.py```.
+
+
+
+## Installable library and interactive navigation 
+
+To use the PPE as python library visit  
+## [:arrow_lower_down:](https://aamakor.github.io/PPE/)
+## [Website](https://aamakor.github.io/PPE/)
+
+
+
 
 
 ## Reference
