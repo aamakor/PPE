@@ -57,17 +57,6 @@ To run the PPE framework for the multitask datasets in ```Data```, simply run th
 For personal use, simply add your model and dataset into the ```model.py``` and ```dataLoader.py```, and ensure both your new model and data are called in the ```main.py```. Interactive visualization during navigation, is only available in 3D. For more than three objectives, final visualization of all objectives can be done by loading the results and using the ```plot_uciplus.py```.
 
 
-
-## Installable library and interactive navigation 
-
-To use the PPE as python library visit  
-## [:arrow_lower_down:](https://aamakor.github.io/PPE/)
-## [Website](https://aamakor.github.io/PPE/)
-
-
-
-
-
 ## Reference
 If you find ```PPE``` helpful for your research, please cite the following paper:
 
