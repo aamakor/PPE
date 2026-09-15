@@ -1,0 +1,6 @@
+=== Training ===
+Predictor time / epoch 3: 0.04 s
+
+Corrector time / epoch 2: 0.03 s
+
+Training time (total): 0.07 s
